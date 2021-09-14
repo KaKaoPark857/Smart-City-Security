@@ -298,7 +298,7 @@ def estimateSpeed(location1, location2):
 	d_meters = d_pixels / ppm 
 	#픽셀의 크기에 도로 크기를 나누어 차량의 크기 계산
 	print("d_pixels=" + str(d_pixels), "d_meters=" + str(d_meters)) # 계산된 픽셀의 크기와 물체 크기 
-	fps = 15
+	fps = 25
 	speed = d_meters * fps * 3.6 
 	#초당 1미터 = 시속 3.6km m/s에 대하여 km/h로 변환 
 	return speed
@@ -339,7 +339,7 @@ def SecurityDroneSpeedCheck():
 			
 			if trackingQuality < 5: 
 				carIDtoDelete.append(carID)
-			#추적하는 물체에 대한 퀄리티에 대해 임계값 7 아래인 물체 삭제	
+			#추적하는 물체에 대한 퀄리티에 대해 임계값 5 아래인 물체 삭제	
 
 		for carID in carIDtoDelete:
 			print ('Removing carID ' + str(carID) + '추적 목록제거')
@@ -352,9 +352,9 @@ def SecurityDroneSpeedCheck():
 		
 		if not (frameCounter % 1):
 			gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-			cars = carCascade.detectMultiScale(gray, 5,4,4,(2,6))
+			cars = carCascade.detectMultiScale(gray, 5,5,5,(7,7))
 			#영상 회색으로 변환하여서 번호판() 검출된 물체에 대해서 cars로 지정
-			#1.1은 이미지 크기에 대한 보정값 , 13~18은 번호판 간격에대한 최소 픽셀크기 , (24,24)는 번호판의 최소크기
+			#5은 이미지 크기에 대한 보정값 , 4~4은 번호판 간격에대한 최소 픽셀크기 , (7,7)는 번호판의 최소크기
 
 			for (_x, _y, _w, _h) in cars:
 				x = int(_x)
@@ -455,11 +455,11 @@ def SecurityDroneSpeedCheck():
 
 
 #도로 파손 알림
-import cv2 #openCV import
-import tensorflow.keras #keras model import
-import numpy as np #numpy short name import
-import datetime #captured image now time import
-
+import cv2
+import tensorflow.keras
+import numpy as np
+import datetime
+from tkinter import *
 
 def preprocessing(frame,confidence=0.25, model='yolov3-tiny'):
     # 사이즈 조정
@@ -473,8 +473,7 @@ def preprocessing(frame,confidence=0.25, model='yolov3-tiny'):
     frame_reshaped = frame_normalized.reshape((1, 224, 224, 3))
     
     return frame_reshaped
-
- # Learned Data locate(학습된 데이터 경로)
+ #학습된 데이터 경로
 
 def SmartRoadDamagedDetect():
     model_filename = './데이터/Converted_keras/keras_model.h5'
@@ -484,35 +483,34 @@ def SmartRoadDamagedDetect():
 
     width = int(capture.get(3))  # 가로
 
-    height = int(capture.get(4))  # 세로
+    height = int(capture.get(4))  # 세로값 가져와서
 
     i = 1 # 첫번째 사진부터 출력하기 위한 초기화
-    count = 11 #초기 카운트값 10보다 커야하므로 설정
+    count = 101 #초기 카운트값 100보다 커야하므로 설정
     while (capture.isOpened):
         ret, frame = capture.read()
-        #frame = cv2.flip(frame,1) # Image Left,Light Changed (영상 좌우반전)
+        #frame = cv2.flip(frame,1) #영상 좌우반전
         if ret == False:
             break
-        cv2.imshow("VideoFrame", frame) # Video Start(비디오 화면 출력)
+        cv2.imshow("VideoFrame", frame) #비디오 화면 출력
         frame_fliped = cv2.flip(frame, 1)
         key = cv2.waitKey(33)  # 1) & 0xFF
-        now = datetime.datetime.now().strftime("%y_%m_%d-%H-%M-%S") # Now Datatime(현재 날짜 시간 출력)
+        now = datetime.datetime.now().strftime("%y_%m_%d-%H-%M-%S") #현재 날짜 시간 출력
         #데이터 전처리
         preprocessed = preprocessing(frame_fliped)
         #예측
         prediction = model.predict(preprocessed)
-	
+    # 사진을 damaged가 있으면 찍고 30초 후에 존재할 경우 또 찍는다.
     #640/360
-        if prediction[0,0] < prediction[0,1]: # Damaged Occurrence capture
+        if prediction[0,0] < prediction[0,1]:
             if count > 10:
                 #for i in range(1,51):
                 print("Damaged")
                 cv2.IMREAD_UNCHANGED
                 url = "./SRDD_HTML/screenshot/" + "SRDD (" + str(i) + ").jpg" #파일 저장 경로
-                res = cv2.resize(frame,dsize=(640,360),interpolation=cv2.INTER_AREA) # Image size Change (640/360)
-                cv2.putText(res,now,(0,40),cv2.FONT_HERSHEY_DUPLEX,1,(255,255,255),2,cv2.LINE_AA) 
-		#Picture Read,Now DateTime, Locate, Pont, PontSize (사진 읽어오기, 현재시간, 위치, 폰트, 글자크기)
-                cv2.imwrite(url, res) #Image Save (이미지 저장)
+                res = cv2.resize(frame,dsize=(640,360),interpolation=cv2.INTER_AREA) #저장 할 이미지 크기 변경
+                cv2.putText(res,now,(0,40),cv2.FONT_HERSHEY_DUPLEX,1,(255,255,255),2,cv2.LINE_AA) #사진 읽어오기, 현재시간, 위치, 폰트, 글자크기
+                cv2.imwrite(url, res) #이미지 저장
                 i += 1
                 count = 0
                 if i >= 1000: #50개 까지 캡처
@@ -524,10 +522,10 @@ def SmartRoadDamagedDetect():
             print(count)
             count+=1
 
-        if count>1000:  # Reset count (데이터가 크면 오류의 위험으로 인해 count(=Nodamaged) 가 1000이 되면 다시 0으로 리셋)
+        if count>1000:  # 데이터가 크면 오류의 위험으로 인해 count(=Nodamaged) 가 1000이 되면 다시 0으로 리셋
             count = 0
 
-        if cv2.waitKey(10) == 27: #push esc for close(esc 눌렀을 때 종료)
+        if cv2.waitKey(10) == 27: #esc 눌렀을 때 종료
             break
 
     capture.release()
