@@ -1,0 +1,2 @@
+0 NoDamaged
+1 Damaged
