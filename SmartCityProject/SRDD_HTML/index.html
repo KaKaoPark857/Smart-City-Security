@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartRoadDamageDetect</title>
+    
+</head>
+<body>
+    <script>  
+        onload = function imgUPload(){
+            document.write('<h1>Smart Road Damage Detect</h1>');
+            map_url = "https://map.naver.com";
+            var temp = 50
+            img_src = new Array();
+            gps_src = new Array();
+            for(var i=1; i<=temp; i++) { //html 이미지 업로드
+                img_src[i] = new Image();
+                gps_src[i] = new Text();
+                img_src[i].src = './screenshot/SRDD ('+ i + ').jpg';
+                gps_src[i].src = './screenshot/SRDD ('+ i + ').txt';
+                document.write(i + '번 : ' + '<a href = "'+ gps_src[i].src + '">' + '<img src="' + img_src[i].src + '"></a>');
+                document.write('<input type="button" value="맵 바로가기" onclick = "window.open(' + map_url + ')"/>' + '<br/><br/>');
+            }
+        }
+    </script>
+    
+</body>
+</html>
